@@ -16,7 +16,7 @@ impl Tuplespace {
         }
     }
 
-    fn insert(&mut self, t: Term) {
+    pub fn insert(&mut self, t: Term) {
         use crate::Term::*;
 
         match t {
@@ -75,6 +75,8 @@ enum Term {
 }
 
 fn eval(term: Term, tspace: &mut Tuplespace) {
+    println!("{:?}", &tspace);
+    println!("term: {:?}", &term);
     match term {
         // Look for a receive on the specified channel, if one exists evaluate the continuation,
         // otherwise push the send onto the channel in the tuplespace
@@ -82,8 +84,12 @@ fn eval(term: Term, tspace: &mut Tuplespace) {
             match tspace.recvs.get_mut(&p.chan) {
                 Some(recvs) => {
                     let cont = recvs.pop()
-                        .expect("There should not be an empty vector for a channel");
+                        .expect(&format!("There should not be an empty vector for channel {}", &p.chan));
 
+                    // TODO: There's gotta be a better way to deal with this garbage collection
+                    if recvs.len() == 0 {
+                        tspace.recvs.remove_entry(&p.chan);
+                    }
                     // TODO: Substitition and evaluate p continutation
                     eval(cont, tspace)
                 }
@@ -94,7 +100,11 @@ fn eval(term: Term, tspace: &mut Tuplespace) {
             match tspace.sends.get_mut(&p.chan) {
                 Some(sends) => {
                     let cont = sends.pop()
-                        .expect("There should not be an empty vector for a channel");
+                        .expect(&format!("There should not be an empty vector for channel {}", &p.chan));
+
+                    if sends.len() == 0 {
+                        tspace.sends.remove_entry(&p.chan);
+                    }
 
                     eval(cont, tspace)
                 }
@@ -119,15 +129,18 @@ fn main() {
     });
 
     let expr2 = Par(
-        Box::new( Send( SendProc{ chan: chan_x.clone(), cont: Box::new(Nil) } ) ),
+        Box::new( Send( SendProc{ chan: "y".to_string(), cont: Box::new(Nil) } ) ),
         Box::new( Receive( ReceiveProc{ chan: chan_x.clone(), cont: Box::new(Nil) }) )
     );
 
     let mut tspace = Tuplespace::new();
     println!("{:?}", tspace);
 
-    tspace.insert(expr1);
-    tspace.insert(expr2);
-
+    //tspace.insert(expr1);
+    //tspace.insert(expr2);
+    eval(expr1, &mut tspace);
     println!("{:?}", tspace);
+    eval(expr2, &mut tspace);
+
+    //println!("{:?}", tspace);
 }
