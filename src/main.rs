@@ -9,34 +9,33 @@ struct Tuplespace {
 }
 
 impl Tuplespace {
-    fn insert(&mut self, t: Term, chan_name: String) -> Option<Term> {
-        use Term;
-
-        match t {
-            Send(cont) => self._add_to_space(t, chan_name),
-            Receive(cont) => self._add_to_space(t, chan_name),
-            // Add both terms in the par to the tuplespace independently. If the first term fails
-            Par(t1,t2) => {
-                match _add_to_space(t1, chan_name.clone()) {
-                    Some(t) => Some( Par(t,t2) ),
-                    None => match _add_to_space(t2, chan_name) {
-                        Some(t) => Some( Par(t1,t) ),
-                        None => None,
-                    },
-                }
-            }
+    fn new() -> Self {
+        Tuplespace {
+            sends: HashMap::new(),
+            recvs: HashMap::new(),
         }
     }
 
-    fn _add_to_space(&mut self, t: Term, chan_name: String) -> Option<Term> {
+    fn insert(&mut self, t: Term, chan_name: String) {
+        use crate::Term::*;
+
+        match t {
+            Send(cont) => self._add_to_space(*cont, chan_name),
+            Receive(cont) => self._add_to_space(*cont, chan_name),
+            Par(t1,t2) => {
+                self._add_to_space(*t1, chan_name.clone());
+                self._add_to_space(*t2, chan_name.clone());
+            },
+            Nil => (),
+        };
+    }
+
+    fn _add_to_space(&mut self, t: Term, chan_name: String) {
         if let Some(v) = self.sends.get_mut( &chan_name ) {
             v.push(t);
-            None
         } else {
-            match self.sends.insert(chan_name, vec![t]) {
-                Some(mut v) => v.pop(),
-                None => None,
-            }
+            // TODO: This should never return Some(_), but that should be explicit
+            self.sends.insert(chan_name, vec![t]);
         }
     }
 }
@@ -71,7 +70,7 @@ fn main() {
         Box::new( Receive( Box::new(Nil)) )
     );
 
-    let mut tspace = Tuplespace( HashMap::new() );
+    let mut tspace = Tuplespace::new();
     println!("{:?}", tspace);
 
     tspace.insert(expr1, "x".to_string());
