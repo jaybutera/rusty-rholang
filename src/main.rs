@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 //type Tuplespace = HashMap<String, Term>;
-#[derive(Debug)]
 //struct Tuplespace (HashMap<String, Vec<Term>>);
+#[derive(Debug)]
 struct Tuplespace {
     sends: HashMap<String, Vec<Term>>,
     recvs: HashMap<String, Vec<Term>>,
@@ -16,35 +16,61 @@ impl Tuplespace {
         }
     }
 
-    fn insert(&mut self, t: Term, chan_name: String) {
+    fn insert(&mut self, t: Term) {
         use crate::Term::*;
 
         match t {
-            Send(cont) => self._add_to_space(*cont, chan_name),
-            Receive(cont) => self._add_to_space(*cont, chan_name),
+            Send(p)    => self._add_to_sends(p),
+            Receive(p) => self._add_to_recvs(p),
             Par(t1,t2) => {
-                self._add_to_space(*t1, chan_name.clone());
-                self._add_to_space(*t2, chan_name.clone());
+                self.insert(*t1);
+                self.insert(*t2);
             },
             Nil => (),
         };
     }
 
-    fn _add_to_space(&mut self, t: Term, chan_name: String) {
-        if let Some(v) = self.sends.get_mut( &chan_name ) {
-            v.push(t);
+    fn _add_to_sends(&mut self, p: SendProc) {
+        let SendProc {chan: chan, cont: cont} = p;
+
+        if let Some(v) = self.sends.get_mut( &chan ) {
+            v.push(*cont);
         } else {
             // TODO: This should never return Some(_), but that should be explicit
-            self.sends.insert(chan_name, vec![t]);
+            self.sends.insert(chan, vec![*cont]);
         }
     }
+    fn _add_to_recvs(&mut self, p: ReceiveProc) {
+        let ReceiveProc {chan: chan, cont: cont} = p;
+
+        if let Some(v) = self.recvs.get_mut( &chan ) {
+            v.push(*cont);
+        } else {
+            // TODO: This should never return Some(_), but that should be explicit
+            self.sends.insert(chan, vec![*cont]);
+        }
+    }
+}
+
+// Make Send and Receive processes types rather than just variants so that we can utilize the type
+// checker on functions dealing with just one of them, and not all terms (see _add_to_sends/recvs fns)
+#[derive(Debug)]
+struct ReceiveProc {
+    chan: String,
+    cont: Box<Term>,
+}
+
+#[derive(Debug)]
+struct SendProc {
+    chan: String,
+    cont: Box<Term>,
 }
 
 #[derive(Debug)]
 enum Term {
     Par(Box<Term>, Box<Term>),
-    Receive(Box<Term>),
-    Send(Box<Term>),
+    Receive(ReceiveProc),
+    Send(SendProc),
     Nil,
 }
 
@@ -63,20 +89,22 @@ fn eval(term: Term, tspace: Tuplespace) -> Term {
 fn main() {
     use Term::*;
 
-    let expr1 = Send( Box::new(Receive( Box::new(Nil) )) );
+    let chan_x = "x".to_string();
+    let expr1 = Send( SendProc {
+        chan: chan_x.clone(),
+        cont: Box::new(Receive( ReceiveProc { chan: chan_x.clone(), cont: Box::new(Nil) } ))
+    });
 
     let expr2 = Par(
-        Box::new( Send( Box::new(Nil) ) ),
-        Box::new( Receive( Box::new(Nil)) )
+        Box::new( Send( SendProc{ chan: chan_x.clone(), cont: Box::new(Nil) } ) ),
+        Box::new( Receive( ReceiveProc{ chan: chan_x.clone(), cont: Box::new(Nil) }) )
     );
 
     let mut tspace = Tuplespace::new();
     println!("{:?}", tspace);
 
-    tspace.insert(expr1, "x".to_string());
-    tspace.insert(expr2, "x".to_string());
-    //assert!(true, tspace.insert(expr1, "x".to_string()).is_none());
-    //assert!(true, tspace.insert(expr2, "x".to_string()).is_none());
+    tspace.insert(expr1);
+    tspace.insert(expr2);
 
     println!("{:?}", tspace);
 }
