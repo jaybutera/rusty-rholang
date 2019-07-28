@@ -31,7 +31,7 @@ impl Tuplespace {
     }
 
     fn _add_to_sends(&mut self, p: SendProc) {
-        let SendProc {chan: chan, cont: cont} = p;
+        let SendProc {chan, cont} = p;
 
         if let Some(v) = self.sends.get_mut( &chan ) {
             v.push(*cont);
@@ -41,7 +41,7 @@ impl Tuplespace {
         }
     }
     fn _add_to_recvs(&mut self, p: ReceiveProc) {
-        let ReceiveProc {chan: chan, cont: cont} = p;
+        let ReceiveProc {chan, cont} = p;
 
         if let Some(v) = self.recvs.get_mut( &chan ) {
             v.push(*cont);
@@ -74,17 +74,40 @@ enum Term {
     Nil,
 }
 
-/*
-fn eval(term: Term, tspace: Tuplespace) -> Term {
+fn eval(term: Term, tspace: &mut Tuplespace) {
     match term {
-        Send(t) => {
-            match tspace.get(chan) {
+        // Look for a receive on the specified channel, if one exists evaluate the continuation,
+        // otherwise push the send onto the channel in the tuplespace
+        Term::Send(p) => {
+            match tspace.recvs.get_mut(&p.chan) {
+                Some(recvs) => {
+                    let cont = recvs.pop()
+                        .expect("There should not be an empty vector for a channel");
+
+                    // TODO: Substitition and evaluate p continutation
+                    eval(cont, tspace)
+                }
+                None => tspace.insert( Term::Send(p) ),
             }
         },
-        //Par(t1, t2) => eval(t1, tuplespace)
+        Term::Receive(p) => {
+            match tspace.sends.get_mut(&p.chan) {
+                Some(sends) => {
+                    let cont = sends.pop()
+                        .expect("There should not be an empty vector for a channel");
+
+                    eval(cont, tspace)
+                }
+                None => tspace.insert( Term::Receive(p) ),
+            }
+        },
+        Term::Par(t1,t2) => {
+            eval(*t1, tspace);
+            eval(*t2, tspace);
+        }
+        Term::Nil => (),
     }
 }
-*/
 
 fn main() {
     use Term::*;
