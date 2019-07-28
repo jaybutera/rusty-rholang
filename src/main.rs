@@ -75,8 +75,9 @@ enum Term {
 }
 
 fn eval(term: Term, tspace: &mut Tuplespace) {
-    println!("{:?}", &tspace);
-    println!("term: {:?}", &term);
+    //println!("{:?}", &tspace);
+    //println!("term: {:?}", &term);
+
     match term {
         // Look for a receive on the specified channel, if one exists evaluate the continuation,
         // otherwise push the send onto the channel in the tuplespace
@@ -136,11 +137,9 @@ fn main() {
     let mut tspace = Tuplespace::new();
     println!("{:?}", tspace);
 
-    //tspace.insert(expr1);
-    //tspace.insert(expr2);
     eval(expr1, &mut tspace);
     println!("{:?}", tspace);
-    eval(expr2, &mut tspace);
 
-    //println!("{:?}", tspace);
+    eval(expr2, &mut tspace);
+    println!("{:?}", tspace);
 }
