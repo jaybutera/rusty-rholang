@@ -9,11 +9,11 @@ use nom::{
 };
 use crate::types::*;
 
-fn term(input: &str) -> IResult<&str, Term> {
+pub fn term(input: &str) -> IResult<&str, Term> {
     alt((nil, send, receive, par))(input)
 }
 
-fn send(input: &str) -> IResult<&str, Term> {
+pub fn send(input: &str) -> IResult<&str, Term> {
     let (input, _)    = tag("!")(input)?;
     let (input, chan) = is_not("(")(input)?;
     let (input, cont_str) = delimited(
@@ -29,7 +29,7 @@ fn send(input: &str) -> IResult<&str, Term> {
          ) )
 }
 
-fn receive(input: &str) -> IResult<&str, Term> {
+pub fn receive(input: &str) -> IResult<&str, Term> {
     let (input, _)    = tag("?")(input)?;
     let (input, chan) = is_not("(")(input)?;
     let (input, cont_str) = delimited(
@@ -45,7 +45,7 @@ fn receive(input: &str) -> IResult<&str, Term> {
          ) )
 }
 
-fn par(input: &str) -> IResult<&str, Term> {
+pub fn par(input: &str) -> IResult<&str, Term> {
     let (input, proc1) = term(input)?;
     let (input, _)     = tag("|")(input)?;
     let (input, proc2) = term(input)?;
@@ -57,7 +57,7 @@ fn par(input: &str) -> IResult<&str, Term> {
         ))
 }
 
-fn nil(input: &str) -> IResult<&str, Term> {
+pub fn nil(input: &str) -> IResult<&str, Term> {
     let (input, _) = tag("Nil")(input)?;
     Ok( (input, Term::Nil) )
 }
@@ -68,16 +68,3 @@ fn test_send() {
 
     assert!(term(program).is_ok());
 }
-
-/*
-fn main () -> std::io::Result<()> {
-    let mut file = File::open("test.rho")?;
-    let mut data = String::new();
-    file.read_to_string(&mut data)?;
-
-    println!("{:?}", send(&data));
-
-    //println!("{:?}", test("heyo world!") );
-    Ok(())
-}
-*/

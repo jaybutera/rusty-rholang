@@ -1,10 +1,11 @@
-use std::collections::HashMap;
+use std::fs::File;
+use std::io::prelude::*;
 use rusty_rholang::types::*;
 
 fn eval(term: Term, tspace: &mut Tuplespace) {
     //println!("{:?}", &tspace);
     //println!("term: {:?}", &term);
-    use rusty_rholang::types::Term::*;
+    //use rusty_rholang::types::Term::*;
 
     match term {
         // Look for a receive on the specified channel, if one exists evaluate the continuation,
@@ -48,8 +49,8 @@ fn eval(term: Term, tspace: &mut Tuplespace) {
     }
 }
 
-fn main() {
-    //use rusty::types::Term::*;
+fn main() -> std::io::Result<()> {
+    use rusty_rholang::parse;
     use rusty_rholang::types::Term::*;
 
     let chan_x = "x".to_string();
@@ -71,4 +72,15 @@ fn main() {
 
     eval(expr2, &mut tspace);
     println!("{:?}", tspace);
+
+    let mut file = File::open("test.rho")?;
+    let mut data = String::new();
+    file.read_to_string(&mut data)?;
+
+    let (_, term) = parse::term(&data)
+        .expect("Failed to parse program");
+
+    println!("{:?}", term);
+
+    Ok(())
 }
