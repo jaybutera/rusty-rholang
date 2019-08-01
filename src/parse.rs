@@ -7,27 +7,10 @@ use nom::{
     bytes::complete::{is_not, tag},
     branch::alt,
 };
-
 use crate::types::*;
 
-//use std::fs::File;
-//use std::io::prelude::*;
-
-/*
-enum Term {
-    Send( SendProc ),
-    Nil,
-}
-
-#[derive(Debug)]
-struct SendProc {
-    chan: String,
-    cont: String,//Box<Term>,
-}
-*/
-
 fn term(input: &str) -> IResult<&str, Term> {
-    alt((send, receive, par, nil))(input)
+    alt((nil, send, receive, par))(input)
 }
 
 fn send(input: &str) -> IResult<&str, Term> {
@@ -83,8 +66,9 @@ fn nil(input: &str) -> IResult<&str, Term> {
 fn test_send() {
     let program = "!x(Nil)";
 
-    send(program);
+    assert!(term(program).is_ok());
 }
+
 /*
 fn main () -> std::io::Result<()> {
     let mut file = File::open("test.rho")?;
