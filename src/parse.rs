@@ -1,8 +1,7 @@
 #[macro_use]
-use nom::{named, tag};
 use nom::{
     IResult,
-    sequence::delimited,
+    sequence::{delimited, pair},
     character::complete::char,
     bytes::complete::{is_not, tag},
     branch::alt,
@@ -46,9 +45,12 @@ pub fn receive(input: &str) -> IResult<&str, Term> {
 }
 
 pub fn par(input: &str) -> IResult<&str, Term> {
+    let (input, _)     = pair(tag("par"), char('('))(input)?;
     let (input, proc1) = term(input)?;
-    let (input, _)     = tag("|")(input)?;
+    //let (input, _)     = ws!(tag("|"))(input)?;
+    let (input, _)     = tag(" | ")(input)?;
     let (input, proc2) = term(input)?;
+    let (input, _)     = char(')')(input)?;
 
     Ok( (input,
          Term::Par(
