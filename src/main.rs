@@ -82,5 +82,10 @@ fn main() -> std::io::Result<()> {
 
     println!("{:?}", term);
 
+    let mut tspace1 = Tuplespace::new();
+    eval(term, &mut tspace1);
+
+    println!("{:?}", tspace1);
+
     Ok(())
 }
