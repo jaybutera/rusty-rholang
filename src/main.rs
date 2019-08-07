@@ -25,14 +25,14 @@ fn eval(term: Term, tspace: &mut Tuplespace) {
         Term::Receive(p) => {
             match tspace.sends.get_mut(&p.chan) {
                 Some(sends) => {
-                    let cont = sends.pop()
+                    let subst = sends.pop()
                         .expect(&format!("There should not be an empty vector for channel {}", &p.chan));
 
                     if sends.len() == 0 {
                         tspace.sends.remove_entry(&p.chan);
                     }
 
-                    eval(cont, tspace)
+                    eval(*p.cont, tspace)
                 }
                 None => tspace.insert( Term::Receive(p) ),
             }

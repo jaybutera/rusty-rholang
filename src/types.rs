@@ -49,7 +49,7 @@ impl Tuplespace {
             v.push(*cont);
         } else {
             // TODO: This should never return Some(_), but that should be explicit
-            self.sends.insert(chan, vec![*cont]);
+            self.recvs.insert(chan, vec![*cont]);
         }
     }
 }
