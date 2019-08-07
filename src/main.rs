@@ -3,10 +3,6 @@ use std::io::prelude::*;
 use rusty_rholang::types::*;
 
 fn eval(term: Term, tspace: &mut Tuplespace) {
-    //println!("{:?}", &tspace);
-    //println!("term: {:?}", &term);
-    //use rusty_rholang::types::Term::*;
-
     match term {
         // Look for a receive on the specified channel, if one exists evaluate the continuation,
         // otherwise push the send onto the channel in the tuplespace
@@ -53,6 +49,7 @@ fn main() -> std::io::Result<()> {
     use rusty_rholang::parse;
     use rusty_rholang::types::Term::*;
 
+    /*
     let chan_x = "x".to_string();
     let expr1 = Send( SendProc {
         chan: chan_x.clone(),
@@ -72,6 +69,7 @@ fn main() -> std::io::Result<()> {
 
     eval(expr2, &mut tspace);
     println!("{:?}", tspace);
+    */
 
     let mut file = File::open("test.rho")?;
     let mut data = String::new();
@@ -80,12 +78,14 @@ fn main() -> std::io::Result<()> {
     let (_, term) = parse::term(&data)
         .expect("Failed to parse program");
 
+    println!("\n\nParsed AST:\n");
     println!("{:?}", term);
 
     let mut tspace1 = Tuplespace::new();
     eval(term, &mut tspace1);
 
-    println!("{:?}", tspace1);
+    println!("\n\nFinal tuplespace:\n");
+    println!("{:?}\n", tspace1);
 
     Ok(())
 }
