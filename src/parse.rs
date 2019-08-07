@@ -15,10 +15,9 @@ pub fn term(input: &str) -> IResult<&str, Term> {
 pub fn send(input: &str) -> IResult<&str, Term> {
     let (input, _)    = tag("!")(input)?;
     let (input, chan) = is_not("(")(input)?;
-    let (input, cont_str) = delimited(
-        char('('), is_not(")"), char(')'))(input)?;
-
-    let (_, cont) = term(cont_str)?;
+    let (input, _)    = char('(')(input)?;
+    let (input, cont) = term(input)?;
+    let (input, _)    = char(')')(input)?;
 
     Ok( (input,
          Term::Send(
@@ -31,10 +30,9 @@ pub fn send(input: &str) -> IResult<&str, Term> {
 pub fn receive(input: &str) -> IResult<&str, Term> {
     let (input, _)    = tag("?")(input)?;
     let (input, chan) = is_not("(")(input)?;
-    let (input, cont_str) = delimited(
-        char('('), is_not(")"), char(')'))(input)?;
-
-    let (_, cont) = term(cont_str)?;
+    let (input, _)    = char('(')(input)?;
+    let (input, cont) = term(input)?;
+    let (input, _)    = char(')')(input)?;
 
     Ok( (input,
          Term::Receive(
